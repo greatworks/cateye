@@ -60,10 +60,12 @@ GitHub 下载需要联网；所有展示资源仍在本地包内。可在 HTTP �
 本轮已依据 2026-10-09 GitHub 正式发布 V2.3.1 更新声音与安装功能说明；
 同时更新手动检查与录制中推迟更新提示的说明。功能文案需在重大功能更新后同步维护，下载文件与版本信息会自动获取。
 
-6. 无构建 / 无 CDN 依赖
+6. 无构建 / 展示资源本地提供
 Bootstrap 已作为本地 CSS 随包提供，Lucide SVG 内嵌在 HTML 中，照片和软件
 界面图片也在包内。网页的展示不依赖第三方图片链接、在线字体或 JS CDN。
 软件本体的下载与发布记录仍链接到 GitHub，需要用户联网访问。
+访问统计使用 Google 托管的异步 gtag.js，需要能够访问 Google 统计服务。
+统计脚本不可用时，页面内容、视频和下载功能继续正常工作。
 
 7. 验证范围
 六个业务页面已检查 1440、768、393、320px 宽度，无横向溢出。
@@ -78,3 +80,10 @@ Open index-en.html for English. These are editable, production-ready static HTML
 files. Upload the entire folder to a static web host; no build, Node.js, npm or
 backend is required. All visual assets, Bootstrap CSS and SVG icons are local.
 Edit the HTML directly and keep the assets directory in place.
+
+8. Google Analytics 4（2026-10-13 接入）
+六个业务页面使用你提供的 G-X13216SEP7，Google 标签各安装一次。
+页面访问由 Google 标签记录；下载脚本另外记录下载点击、下载请求发起、
+获取 GitHub 最新版失败，并附按钮位置、界面语言及安装包版本参数。
+具体事件和 GA4 后台配置见 docs/Google-Analytics-说明.txt。
+更新六个 HTML 和 assets/js/downloads.js 后，重新发布到 GitHub Pages。

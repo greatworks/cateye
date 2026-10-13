@@ -10,6 +10,38 @@
   var busy = false;
   var toastTimer;
 
+  function track(name, details) {
+    // Analytics is optional and must never delay or interrupt a download.
+    if (typeof window.gtag !== 'function') return;
+    var parameters = { page_language: document.documentElement.lang };
+    Object.keys(details || {}).forEach(function (key) { parameters[key] = details[key]; });
+    try { window.gtag('event', name, parameters); } catch (error) { /* Recording is best-effort. */ }
+  }
+
+  function buttonLocation(link) {
+    if (link.closest('.hero-actions')) return 'hero';
+    if (link.classList.contains('nav-download')) return 'header';
+    if (link.closest('.final-cta')) return 'final_cta';
+    if (link.closest('.download-card')) return 'download_card';
+    if (link.closest('.footer-links')) return 'footer';
+    return 'other';
+  }
+
+  function releaseError(code, message, status) {
+    var error = new Error(message); error.code = code;
+    if (status) error.status = status;
+    return error;
+  }
+
+  function trackFailure(error, action, placement) {
+    var kind = error && error.name === 'AbortError' ? 'timeout' :
+      (error && error.code ? error.code : (error && error.name === 'SyntaxError' ? 'invalid_json' : 'network_error'));
+    var details = { source_action: action, error_type: kind };
+    if (placement) details.button_location = placement;
+    if (error && error.status) details.http_status = error.status;
+    track('cateye_release_error', details);
+  }
+
   function message(zh, english) { return en ? english : zh; }
   function notify(text, error) {
     var toast = document.querySelector('.toast');
@@ -43,7 +75,7 @@
 
   function chooseAsset(release) {
     if (!release || release.draft !== false || release.prerelease !== false ||
-        typeof release.tag_name !== 'string' || !Array.isArray(release.assets)) throw new Error('Invalid release');
+        typeof release.tag_name !== 'string' || !Array.isArray(release.assets)) throw releaseError('invalid_release', 'Invalid release');
     var candidates = release.assets.filter(function (asset) {
       return typeof asset.name === 'string' && /^CatEyeScreenRecorder[-_.]/i.test(asset.name) &&
         /windows[-_. ](?:x64|amd64)/i.test(asset.name) && !/(?:arm64|aarch64)/i.test(asset.name) &&
@@ -54,7 +86,7 @@
       return 2;
     }
     candidates.sort(function (a, b) { return rank(a) - rank(b) || a.name.localeCompare(b.name); });
-    if (!candidates.length) throw new Error('No Windows x64 asset in latest stable release');
+    if (!candidates.length) throw releaseError('missing_asset', 'No Windows x64 asset in latest stable release');
     return { release: release, asset: candidates[0], url: assetUrl(candidates[0]) };
   }
 
@@ -103,7 +135,7 @@
       headers: { Accept: 'application/vnd.github+json' },
       cache: 'no-store', credentials: 'omit', signal: controller.signal
     }).then(function (response) {
-      if (!response.ok) throw new Error('GitHub HTTP ' + response.status);
+      if (!response.ok) throw releaseError('http_error', 'GitHub HTTP ' + response.status, response.status);
       return response.json();
     }).then(chooseAsset).then(function (result) { render(result); return result; });
     pending = pending.then(function (result) {
@@ -132,6 +164,8 @@
     link.addEventListener('click', function (event) {
       event.preventDefault();
       if (busy) return;
+      var placement = buttonLocation(link);
+      track('cateye_download_click', { button_location: placement });
       setBusy(true);
       notify(message('正在获取最新安装包…', 'Getting the latest download…'));
       getLatest().then(function (result) {
@@ -142,9 +176,17 @@
         document.body.appendChild(transfer);
         transfer.click();
         transfer.remove();
+        track('cateye_download_request', {
+          button_location: placement,
+          release_version: result.release.tag_name,
+          file_name: result.asset.name,
+          file_extension: result.asset.name.split('.').pop().toLowerCase()
+        });
         notify(message('已向浏览器请求下载 ', 'Download requested: ') + result.release.tag_name +
           message('。请查看浏览器下载列表。', '. Check your browser downloads.'));
-      }).catch(fail).then(function () { setBusy(false); });
+      }).catch(function (error) {
+        trackFailure(error, 'download', placement); fail();
+      }).then(function () { setBusy(false); });
     });
   });
 
@@ -164,10 +206,13 @@
         }, fallback);
       }
       fallback();
-    }).catch(fail).then(function () { setBusy(false); });
+    }).catch(function (error) {
+      trackFailure(error, 'copy_link'); fail();
+    }).then(function () { setBusy(false); });
   });
 
-  if (links.length) getLatest().catch(function () {
+  if (links.length) getLatest().catch(function (error) {
+    trackFailure(error, 'page_load');
     document.querySelectorAll('[data-release-size]').forEach(function (el) { el.textContent = message('体积待获取', 'Size unavailable'); });
   });
 })();

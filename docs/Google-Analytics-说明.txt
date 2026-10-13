@@ -1,0 +1,56 @@
+猫眼录屏 Google Analytics 4 接入说明
+接入日期：2026-10-13
+衡量 ID：G-X13216SEP7
+
+一、安装范围
+index.html、index-en.html、download.html、download-en.html、guide.html、
+guide-en.html 均已在 head 中加入你提供的 Google tag；每页只配置一次。
+代码不额外手动发送 page_view，避免与 Google 标签自动浏览统计重复。
+
+二、猫眼下载事件
+cateye_download_click：接受一次下载操作后发送；带 button_location、
+page_language。按钮正在处理时的重复点击不重复记录。
+
+cateye_download_request：获取最新版并将下载请求交给浏览器后发送；
+带 button_location、page_language、release_version、file_name、file_extension。
+这表示发起请求，不能证明下载已完成，也不代表安装成功。
+
+cateye_release_error：获取最新版失败时发送；带 source_action、error_type，
+HTTP 错误还带 http_status；下载操作错误带 button_location。
+source_action 为 page_load（页面预加载）、download（用户下载操作）或
+copy_link（复制下载地址）。算下载失败率时，只统计 source_action=download。
+error_type 为 http_error、timeout、invalid_release、missing_asset、
+invalid_json 或 network_error。不上报原始错误文本、堆栈或本地路径。
+
+按钮位置：hero=首页首屏，header=顶部按钮，final_cta=内容末尾按钮，
+footer=页脚，download_card=下载页主按钮。中文为 zh-CN，英文为 en。
+复制成功和页面预加载成功不会当成下载点击或发起下载请求。
+
+三、GA4 后台查看
+发布到 GitHub Pages 后，在 Google Analytics 选择 G-X13216SEP7 对应资源，
+打开“实时”报告。使用正常浏览器访问已发布网站，再点击下载按钮检查事件。
+浏览器必须能够加载 Google 统计脚本并向其上报；后台报表是否收到数据需要
+在你的 GA4 账户内确认。本轮没有登录你的账户或更改后台设置。
+
+如需在标准报告或探索中按按钮位置、页面语言、版本及错误类型分组，
+在“管理 → 数据展示 → 自定义定义”创建事件级自定义维度：
+按钮位置 / button_location
+页面语言 / page_language
+软件版本 / release_version
+操作来源 / source_action
+错误类型 / error_type
+创建后需要等待 GA4 处理新数据。可按 Google 官方说明将
+cateye_download_request 标为关键事件；含义仍是发起下载请求。
+Google 自动增强衡量可能另外记录 click 或 file_download，计算下载操作
+时使用上述 cateye_* 自定义事件，避免把不同事件相加而重复计算。
+
+四、验证与边界
+本地 Chromium 完成 16 项检查：六页单次初始化、五个按钮位置、
+中英文参数、失败/重试、错误分类、预加载区分、重复点击和统计异常回退。
+测试替代了 Google 外部脚本，仅核对实际 gtag 调用和队列；没有把测试
+流量发送到你的正式 GA4 资源，也没有声称已在后台看到实时数据。
+统计调用不等待上报回调，不额外延迟下载；统计缺失或抛错不阻断下载。
+
+Google 官方参考：
+https://developers.google.com/analytics/devguides/collection/ga4/events
+https://support.google.com/analytics/answer/14239696

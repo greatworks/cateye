@@ -31,6 +31,7 @@
 <p>直接编辑 HTML；样式位于 <code>assets/css/main.css</code>，动效位于 <code>assets/js/main.js</code>，最新下载位于 <code>assets/js/downloads.js</code>。Bootstrap CSS、Lucide 图标和图片均在本地交付。无需 Node.js、npm、数据库、框架运行时或构建命令。</p>
 <p>将完整文件夹上传到静态托管，确保 <code>index.html</code> 是根目录入口并保留 <code>assets</code>。页面全部使用相对路径，支持根目录或子目录部署。页面打开和点击下载时查询 GitHub 最新正式版，自动更新版本、体积与安装包地址。优先 EXE/MSI，同版本无安装器时使用 ZIP；失败提示重试与最新发布页，不回退旧版。仅顶部导航菜单跳转独立下载页，其余下载入口直接请求下载。</p>
 <h2>7. 验证范围</h2>
+<p>2026-10-13 已在六个业务页面加入 Google Analytics 4，衡量 ID 为 <code>G-X13216SEP7</code>。下载点击、发起下载请求和获取最新版失败均有独立事件，并记录按钮位置、页面语言及安装包版本。Google 标签异步加载；统计不可用不阻断下载。本地检查只验证初始化和事件调用，没有向正式统计资源发送测试流量。后台查看与自定义维度说明见 <a href="Google-Analytics-说明.txt">Google Analytics 接入说明</a>。</p>
 <p>已检查六个业务页面的 1440 / 768 / 393 / 320px 布局、资源引用、内部锚点、双语覆盖和交互。浏览器测试采用 HTTP 本地预览，并验证 file:// 直接打开首页可获取 GitHub 最新版本信息。最新安装包已从首页实际下载并核对体积与 SHA-256。已验证限流后重试、9 秒超时、便携 ZIP 说明及剪贴板不可用时的手动复制回退。</p>
 <p>没有进行实体 iPhone / Android 或全部浏览器真机验收；网站测试不替代 Windows 录屏软件本身的跨系统回归。</p>
 <p><a href="../index.html">返回中文首页 →</a>　<a href="../index-en.html">Open English home →</a></p>
